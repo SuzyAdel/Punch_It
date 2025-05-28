@@ -23,4 +23,6 @@ This environment is ideal for exploring basic navigation, target acquisition, an
 1. created a plane , metalic blue sphere , and added a space skybox
    ![image](https://github.com/user-attachments/assets/c9b37ded-4ec2-4c0b-a41f-8f9afc2b1fe8)
 
-2. 
+2. added the character , extrracted the materials and creared a star particle with greidoent color and glow
+![image](https://github.com/user-attachments/assets/d0a38caa-8c28-471a-ad11-f6b6de5d95bd)
+
