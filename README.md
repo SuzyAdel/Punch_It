@@ -64,4 +64,18 @@ This environment is ideal for exploring basic navigation, target acquisition, an
   ![image](https://github.com/user-attachments/assets/f35cee47-b506-46fb-b311-31a7ddd4c7ed)
 
 
-5. 
+4. Mlagent
+   
+## 👁 3. Observations (Agent)
+- Distance between character and sphere
+- Angle between forward direction and sphere
+- Punch cooldown timer (normalized)
+
+Total: **3 vector observations**
+
+ ## 🎮 4. Actions (Discrete)
+- Branch 0: Walk forward (2 values: 0 = idle, 1 = walk)
+- Branch 1: Turn (3 values: 0 = left, 1 = right)
+- Branch 2: Punch (1 values: 0 = trigger punch)
+
+
