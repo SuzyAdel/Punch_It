@@ -50,11 +50,17 @@ This environment is ideal for exploring basic navigation, target acquisition, an
 
 3. downloaded animations no skin
    ## 🎬 Animation: Punch
-The punch is triggered using the animation parameter: `Animator.SetTrigger("Punch")`. To replicate or duplicate this animation:
-1. Open the Animator Controller.
-2. Duplicate the punch state if variations are needed (e.g., PunchLeft, PunchRight).
-3. Ensure transitions lead to/from "Idle" and "Walk" smoothly.
-4. Keep transitions short and blend times tight to avoid sluggish combat behavior.
+### States:
+- **Idle**
+- **Left** (Triggered when `Left` = true, back to Idle when `Idle` = true)
+- **Right** (Triggered when `Right` = true, back to Idle when `Idle` = true)
+- **Walk** (Transition from Right or Left when `Walk` = true, back to Left or Right when `Left` or `Right` = true)
+- **Punch** (From Idle when `Idle` = true, to Walk if `Walk` = true, or back to Idle if `Idle` = true)
+
+### Transitions:
+- Add parameters: `Idle` (bool), `Left` (bool), `Right` (bool), `Walk` (bool), `Punch` (trigger)
+- Setup transitions in Animator accordingly.
+
   ![image](https://github.com/user-attachments/assets/f35cee47-b506-46fb-b311-31a7ddd4c7ed)
 
 
