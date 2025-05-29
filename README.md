@@ -26,3 +26,7 @@ This environment is ideal for exploring basic navigation, target acquisition, an
 2. added the character , extrracted the materials and creared a star particle with greidoent color and glow
 ![image](https://github.com/user-attachments/assets/d0a38caa-8c28-471a-ad11-f6b6de5d95bd)
 
+3. downloaded animations no skin
+   ![image](https://github.com/user-attachments/assets/0d6d0d89-ed0f-449b-b105-b5a2ac9ba35f)
+
+4. 
