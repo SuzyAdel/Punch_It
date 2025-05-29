@@ -55,6 +55,7 @@ The punch is triggered using the animation parameter: `Animator.SetTrigger("Punc
 2. Duplicate the punch state if variations are needed (e.g., PunchLeft, PunchRight).
 3. Ensure transitions lead to/from "Idle" and "Walk" smoothly.
 4. Keep transitions short and blend times tight to avoid sluggish combat behavior.
-   ![image](https://github.com/user-attachments/assets/0d6d0d89-ed0f-449b-b105-b5a2ac9ba35f)
+  ![image](https://github.com/user-attachments/assets/f35cee47-b506-46fb-b311-31a7ddd4c7ed)
+
 
 5. 
