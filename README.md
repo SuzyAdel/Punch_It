@@ -3,17 +3,39 @@ SphereChase-Punch is a Unity ML-Agents environment where a learning agent, locat
 
 # Key features include:
 
-🔄 Randomized target placement on each episode reset
+🔄 Randomized target placement on each episode reset, while the sphere constantly mobes up adn down 
 
-🧍‍♂️ Physics-based humanoid punch animation 
+🧍‍♂️ Physics-based humanoid punch animation
+
+## 🤖 ML-Agent Task: "PunchBot Precision"
+
+This task trains a humanoid ML-Agent to walk, rotate, and time its punches to hit a vertically oscillating target (sphere). The agent operates with **3 discrete branches**:
+- **Branch 0:** Walk forward
+- **Branch 1:** Turn left or right
+- **Branch 2:** Trigger punch (via animation)
 
 👊 Reward signal for successful contact with the sphere
 
 ⛔ Penalties for missing, standing idle, or leaving bounds
 
-//🧠 Custom observations: vector direction, distance to target, velocity, and orientation
-
+🧠 Custom observations: distance to target and orientation
+### 🎯 Task Objective:
+Approach and precisely punch a sphere that moves up and down on a fixed plane. The environment evaluates:
+- Distance to the target (float)
+- Angle between agent’s forward vector and target (float)
+- A normalized cooldown timer to restrict repeated punches (float)
+  
 //🧪 A minimal testbed for movement, targeting, and physical interaction learning
+
+### 💡 Training Setup:
+- **Observations:** 3 floats (distance, angle, punch cooldown)
+- **Max Steps per Episode:** 10,000
+- **Rewards:**
+  - `+1` for a successful punch
+  - `-0.5` for a punch during cooldown or a miss
+  - `-1` if the agent falls off the terrain (`transform.y < -1`)
+- **Punch Logic:** Animator trigger `"Punch"` controlled by cooldown
+- **Network:** PPO with LSTM memory for temporal context and punch timing
 
 This environment is ideal for exploring basic navigation, target acquisition, and reinforcement learning-driven interactions in Unity using ML-Agents.
 
@@ -27,6 +49,12 @@ This environment is ideal for exploring basic navigation, target acquisition, an
 ![image](https://github.com/user-attachments/assets/d0a38caa-8c28-471a-ad11-f6b6de5d95bd)
 
 3. downloaded animations no skin
+   ## 🎬 Animation: Punch
+The punch is triggered using the animation parameter: `Animator.SetTrigger("Punch")`. To replicate or duplicate this animation:
+1. Open the Animator Controller.
+2. Duplicate the punch state if variations are needed (e.g., PunchLeft, PunchRight).
+3. Ensure transitions lead to/from "Idle" and "Walk" smoothly.
+4. Keep transitions short and blend times tight to avoid sluggish combat behavior.
    ![image](https://github.com/user-attachments/assets/0d6d0d89-ed0f-449b-b105-b5a2ac9ba35f)
 
-4. 
+5. 
