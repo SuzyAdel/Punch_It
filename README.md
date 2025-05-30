@@ -32,8 +32,8 @@ Approach and precisely punch a sphere that moves up and down on a fixed plane. T
 - **Max Steps per Episode:** 10,000
 - **Rewards:**
   - `+1` for a successful punch
-  - `-0.5` for a punch during cooldown or a miss
-  - `+0.5` for inverse angle to represent closeness 
+  - `+0.5` for inverse angle to represent closeness
+  - `-0.5` for a punch during cooldown or a miss 
   - `-1` if the agent falls off the terrain (`transform.y < -1`)
 - **Punch Logic:** Animator trigger `"Punch"` controlled by cooldown
 - **Network:** PPO with LSTM memory for temporal context and punch timing
