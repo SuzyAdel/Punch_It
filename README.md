@@ -33,6 +33,7 @@ Approach and precisely punch a sphere that moves up and down on a fixed plane. T
 - **Rewards:**
   - `+1` for a successful punch
   - `-0.5` for a punch during cooldown or a miss
+  - `+0.5` for inverse angle to represent closeness 
   - `-1` if the agent falls off the terrain (`transform.y < -1`)
 - **Punch Logic:** Animator trigger `"Punch"` controlled by cooldown
 - **Network:** PPO with LSTM memory for temporal context and punch timing
@@ -58,7 +59,7 @@ This environment is ideal for exploring basic navigation, target acquisition, an
 - **Punch** (From Idle when `Idle` = true, to Walk if `Walk` = true, or back to Idle if `Idle` = true)
 
 ### Transitions:
-- Add parameters: `Idle` (bool), `Left` (bool), `Right` (bool), `Walk` (bool), `Punch` (trigger)
+- Add parameters: `Idle` (bool), `Left` (bool), `Right` (bool), `Walk` (bool), `Punch` (bool)
 - Setup transitions in Animator accordingly.
 
   ![image](https://github.com/user-attachments/assets/f35cee47-b506-46fb-b311-31a7ddd4c7ed)
