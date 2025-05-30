@@ -2,21 +2,16 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
-using UnityEngine.UIElements;
-using System.Runtime.CompilerServices;
-using System.Diagnostics;
-
 
 public class MlA_Movement : Agent
 {
-
     public GameObject sphere;
     public GameObject plane;
     public GameObject terrian;
     public Animator animator;
     public Material winMat, loseMat;
     
-    public float cooldown = 2.0f ; // Cooldown for punching the sphere
+    public float cooldown = 2.0f; // Cooldown for punching the sphere
     public float moveSpeed = 5f; // Speed of the agent's movement
     public float rotationSpeed = 100f; // Speed of rotation
 
@@ -25,7 +20,7 @@ public class MlA_Movement : Agent
     public override void OnEpisodeBegin()
     {
         // get plane size from the attached game object 
-         int planeSize = (int)plane.transform.localScale.x; // Assuming the plane is square, use x scale
+        int planeSize = (int)plane.transform.localScale.x; // Assuming the plane is square, use x scale
 
         // Reset the agent's position and state at the beginning of each episode
         //make the character start at the center of the plane 
@@ -55,13 +50,11 @@ public class MlA_Movement : Agent
         // Collect observations about the environment here
         //observe distance/angel between character and spheres local position 
 
-        sensor.AddObservation(Vector3.Distance(transform.localPosition, sphere.localPosition));
-        sensor.AddObservation(Vector3.Angle(transform.forward, Sphere.position - transform.position) / 180f);
+        sensor.AddObservation(Vector3.Distance(transform.localPosition, sphere.transform.localPosition));
+        sensor.AddObservation(Vector3.Angle(transform.forward, sphere.transform.position - transform.position) / 180f);
         //wait a while for another punch 
-        sensor.AddObservation(Mathf.Clamp01(cooldown));
-
+        sensor.AddObservation(Mathf.Clamp01(currentCooldown / cooldown));
     }
-
 
     public override void OnActionReceived(ActionBuffers actions)
     {
@@ -154,7 +147,6 @@ public class MlA_Movement : Agent
 
         // punich for punching sevral times after each other without waiting for cooldown
 
-
         // Reward for getting closer to target
         // divide on smaller vlues means bigger value // inverse distance reward
         float currentDistance = Vector3.Distance(transform.position, sphere.transform.position);
@@ -165,60 +157,46 @@ public class MlA_Movement : Agent
         AddReward(0.5f * (1f - angleToTarget / 180f)); // Normalized angle reward
     }
 
-}
-
-private void OnCollisionEnter(Collision collision)
-{
-    if (collision.gameObject.name == "Sphere")
+    private void OnCollisionEnter(Collision collision)
     {
-        // Check if we're in punching animation
-        if (animator.GetBool("Punch"))
-        {
-            // Punch the sphere
-            SetReward(1f); // Reward for punching the sphere
-                           // set sphere color with win material to resemble win 
-            plane.GetComponent<Renderer>().material = winMat;
-            EndEpisode();
-        }
-    }
-}
-public override void Heuristic(in ActionBuffers actionsOut)
-    {
-    // Define manual control for testing purposes here
-    //press  take control manually the animation  to move and able to punch manually to effect the trianing 
-    var discreteActions = actionsOut.DiscreteActions;
-
-    // Movement (W key)
-    discreteActions[0] = Input.GetKey(KeyCode.W) ? 1 : 0;
-
-    // Turning (A and D keys)
-    if (Input.GetKey(KeyCode.A))
-    {
-        discreteActions[1] = 0; // Left
-    }
-    else if (Input.GetKey(KeyCode.D))
-    {
-        discreteActions[1] = 1; // Right
-    }
-    else
-    {
-        discreteActions[1] = 2; // No turn
-    }
-
-    // Punch (Space key)
-    discreteActions[2] = Input.GetKey(KeyCode.Space) ? 0 : 1;
-}
-// also check if the sphere fell down 
-private void OnCollisionEnter(Collision collision)
-        {
         if (collision.gameObject.name == "Sphere")
         {
-            SetReward(1f);
-            plane.GetComponent<Renderer>().material = winMat;
-            EndEpisode();
+            // Check if we're in punching animation
+            if (animator.GetBool("Punch"))
+            {
+                // Punch the sphere
+                SetReward(1f); // Reward for punching the sphere
+                // set sphere color with win material to resemble win 
+                plane.GetComponent<Renderer>().material = winMat;
+                EndEpisode();
+            }
         }
     }
 
+    public override void Heuristic(in ActionBuffers actionsOut)
+    {
+        // Define manual control for testing purposes here
+        //press  take control manually the animation  to move and able to punch manually to effect the trianing 
+        var discreteActions = actionsOut.DiscreteActions;
 
+        // Movement (W key)
+        discreteActions[0] = Input.GetKey(KeyCode.W) ? 1 : 0;
 
+        // Turning (A and D keys)
+        if (Input.GetKey(KeyCode.A))
+        {
+            discreteActions[1] = 0; // Left
+        }
+        else if (Input.GetKey(KeyCode.D))
+        {
+            discreteActions[1] = 1; // Right
+        }
+        else
+        {
+            discreteActions[1] = 2; // No turn
+        }
+
+        // Punch (Space key)
+        discreteActions[2] = Input.GetKey(KeyCode.Space) ? 0 : 1;
+    }
 }
