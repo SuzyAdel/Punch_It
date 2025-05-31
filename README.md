@@ -45,11 +45,8 @@ You're right to be thinking in terms of redundancy , however:
 
 - Punishments guide "what NOT to do" (punch too early, spam attacks, etc).
 
-
-This environment is ideal for exploring basic navigation, target acquisition, and reinforcement learning-driven interactions in Unity using ML-Agents.
-
-
-# Steps
+  
+#  My Steps
 
 1. created a plane , metalic blue sphere , and added a space skybox
    ![image](https://github.com/user-attachments/assets/c9b37ded-4ec2-4c0b-a41f-8f9afc2b1fe8)
@@ -72,8 +69,25 @@ This environment is ideal for exploring basic navigation, target acquisition, an
 
   ![image](https://github.com/user-attachments/assets/f35cee47-b506-46fb-b311-31a7ddd4c7ed)
 
+4. Code
+ - reward dilmea
+       ![image](https://github.com/user-attachments/assets/3a5ed2f2-d13e-41eb-b8c6-6880990d7b16)
+   - if the distance is small , high valu due to lare divdant explosion
+   - must be fixed by normlization and to keep bounded
+![image](https://github.com/user-attachments/assets/2d64b620-771d-4aa0-a045-5bb876535f69)
+      This way:
+        - Closer = higher reward (max 0.1)
+        - Far = near zero reward
+     
 
-4. Mlagent
+
+
+
+
+
+
+   
+5. Mlagent
    
 ## 👁 3. Observations (Agent)
 - Distance between character and sphere
