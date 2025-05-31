@@ -13,6 +13,13 @@ This task trains a humanoid ML-Agent to walk, rotate, and time its punches to hi
 - **Branch 0:** Walk forward
 - **Branch 1:** Turn left or right
 - **Branch 2:** Trigger punch (via animation)
+- 
+- Vector Observation: 4 (or more depending on added observations)
+Actions:
+  - Branch 0: 2 (Idle, Walk)
+  - Branch 1: 3 (Left, Right, No Turn)
+  - Branch 2: 2 (Punch or not)
+
 
 👊 Reward signal for successful contact with the sphere
 
