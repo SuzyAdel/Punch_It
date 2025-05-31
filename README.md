@@ -38,6 +38,14 @@ Approach and precisely punch a sphere that moves up and down on a fixed plane. T
 - **Punch Logic:** Animator trigger `"Punch"` controlled by cooldown
 - **Network:** PPO with LSTM memory for temporal context and punch timing
 
+# Do You Need Punch Penalties if You Already Have Inverse Rewards?
+You're right to be thinking in terms of redundancy , however:
+
+- Inverse rewards guide "what to do" (get close, face target).
+
+- Punishments guide "what NOT to do" (punch too early, spam attacks, etc).
+
+
 This environment is ideal for exploring basic navigation, target acquisition, and reinforcement learning-driven interactions in Unity using ML-Agents.
 
 
