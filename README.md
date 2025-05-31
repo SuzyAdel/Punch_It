@@ -64,10 +64,11 @@ You're right to be thinking in terms of redundancy , however:
 - **Punch** (From Idle when `Idle` = true, to Walk if `Walk` = true, or back to Idle if `Idle` = true)
 
 ### Transitions:
-- Add parameters: `Idle` (bool), `Left` (bool), `Right` (bool), `Walk` (bool), `Punch` (bool)
+- Add parameters: `Idle` (bool), `Left` (bool), `Right` (bool), `Walk` (bool), `Punch` (trigger)
 - Setup transitions in Animator accordingly.
 
   ![image](https://github.com/user-attachments/assets/f35cee47-b506-46fb-b311-31a7ddd4c7ed)
+
 
 4. Code
  - reward dilmea
