@@ -7,7 +7,6 @@ public class MlA_Movement : Agent
 {
     public GameObject sphere;
     public GameObject plane;
-    public GameObject terrian;
     public Animator animator;
     public Material winMat, loseMat;
     
@@ -38,12 +37,18 @@ public class MlA_Movement : Agent
         plane.GetComponent<Renderer>().material = loseMat;
 
         // Reset animation
-        animator.SetBool("Idle", true);
-        animator.SetBool("Walk", false);
+        ResetAllTriggers();
+    }
+
+    void ResetAllTriggers()
+    {
+        animator.SetBool("Idle", false);
         animator.SetBool("Left", false);
         animator.SetBool("Right", false);
+        animator.SetBool("Walk", false);
         animator.SetBool("Punch", false);
     }
+
 
     public override void CollectObservations(VectorSensor sensor)
     {
@@ -85,16 +90,18 @@ public class MlA_Movement : Agent
         if (turnAction == 0) // Left
         {
             transform.Rotate(Vector3.up, -rotationSpeed * Time.deltaTime);
+            ResetAllTriggers();
             animator.SetBool("Left", true);
-            animator.SetBool("Right", false);
+            //animator.SetBool("Right", false);
         }
         else if (turnAction == 1) // Right
         {
             transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
+            ResetAllTriggers();
             animator.SetBool("Right", true);
-            animator.SetBool("Left", false);
+            //animator.SetBool("Left", false);
         }
-        else // No turn
+        else // No turn, just reset turning animations
         {
             animator.SetBool("Left", false);
             animator.SetBool("Right", false);
@@ -103,7 +110,9 @@ public class MlA_Movement : Agent
         // Handle punching
         if (punchAction == 0 && currentCooldown <= 0f)
         {
-            animator.SetBool("Punch", true);
+            ResetAllTriggers();
+            //animator.SetBool("Punch", true);
+            animator.SetTrigger("Punch");
             currentCooldown = cooldown;
 
             // Check if we might hit the sphere (simplified check)
@@ -122,7 +131,7 @@ public class MlA_Movement : Agent
         }
         else
         {
-            animator.SetBool("Punch", false);
+            //animator.SetBool("Punch", false); trigger
 
             // Penalize for punching during cooldown
             if (punchAction == 0 && currentCooldown > 0f)
@@ -140,7 +149,7 @@ public class MlA_Movement : Agent
         // Fell off check
         if (transform.position.y < -1f) // fell off 
         {
-            SetReward(-1f);
+            SetReward(-1f); // Penalty for falling off the plane
             EndEpisode();
         }
 
@@ -154,22 +163,32 @@ public class MlA_Movement : Agent
         AddReward(maxReward * (1f - Mathf.Clamp01(currentDistance / maxDistance)));
 
 
-        // Reward for better angle to target
+        // Reward for better angle to targetf
         float angleToTarget = Vector3.Angle(transform.forward, sphere.transform.position - transform.position);
         AddReward(0.5f * (1f - angleToTarget / 180f)); // Normalized angle reward
+
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.name == "Sphere")
+        // Check if we collided with the sphere
+        if (collision.gameObject == sphere)
         {
+            // Get current animation state
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+
             // Check if we're in punching animation
-            if (animator.GetBool("Punch"))
+            if (state.IsName("Punch") && state.normalizedTime < 0.3f)
             {
                 // Punch the sphere
                 SetReward(1f); // Reward for punching the sphere
+
                 // set sphere color with win material to resemble win 
                 plane.GetComponent<Renderer>().material = winMat;
+
+                // Add force to sphere for visual feedback
+                collision.rigidbody.AddForce(transform.forward * 10f, ForceMode.Impulse);
+
                 EndEpisode();
             }
         }
