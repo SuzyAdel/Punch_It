@@ -42,6 +42,23 @@ Approach and precisely punch a sphere that moves up and down on a fixed plane. T
   - `+0.5` for inverse angle to represent closeness
   - `-0.5` for a punch during cooldown or a miss 
   - `-1` if the agent falls off the terrain (`transform.y < -1`)
+ 
+- +1 for correct punch (success)
+
+-1 for falling off
+
+-0.1 for incorrect punch or punching during cooldown
+
+- Small penalty for idling
+
+- Small positive shaping reward for facing and moving closer to sphere
+-W → Walk forward
+
+A/D → Turn left/right
+
+Space → Punch
+This is compatible with the 3-branch discrete action space above.
+
 - **Punch Logic:** Animator trigger `"Punch"` controlled by cooldown
 - **Network:** PPO with LSTM memory for temporal context and punch timing
 
