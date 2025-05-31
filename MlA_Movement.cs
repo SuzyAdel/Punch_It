@@ -71,13 +71,14 @@ public class MlA_Movement : Agent
             animator.SetBool("Walk", true);
             animator.SetBool("Idle", false);
 
-            // Small negative reward for moving to encourage efficiency
-            AddReward(-0.01f);
         }
         else
         {
             animator.SetBool("Walk", false);
             animator.SetBool("Idle", true);
+
+            //  Discsrdge staying still 
+            AddReward(-0.01f); // Small penalty for not moving
         }
 
         // Handle turning
@@ -116,7 +117,7 @@ public class MlA_Movement : Agent
             else
             {
                 // Penalize for punching when not properly aligned
-                AddReward(-0.5f);
+                AddReward(-0.1f);//-0.5f is too high, so I used -0.1f to avoid harsh penalties
             }
         }
         else
@@ -126,7 +127,7 @@ public class MlA_Movement : Agent
             // Penalize for punching during cooldown
             if (punchAction == 0 && currentCooldown > 0f)
             {
-                AddReward(-0.5f);
+                AddReward(-0.1f);// -0.5f is too high, so I used -0.1f to avoid harsh penalties
             }
         }
 
@@ -143,14 +144,15 @@ public class MlA_Movement : Agent
             EndEpisode();
         }
 
-        // punich for puncjing without colliding with sphere
-
-        // punich for punching sevral times after each other without waiting for cooldown
-
         // Reward for getting closer to target
-        // divide on smaller vlues means bigger value // inverse distance reward
+        // divide on smaller vlues means bigger value 
+        // inverse distance reward, this may lead to explosion so normlize 
         float currentDistance = Vector3.Distance(transform.position, sphere.transform.position);
-        AddReward(0.1f / currentDistance);
+        //AddReward(0.1f / currentDistance);
+        float maxReward = 0.1f;
+        float maxDistance = 10f; 
+        AddReward(maxReward * (1f - Mathf.Clamp01(currentDistance / maxDistance)));
+
 
         // Reward for better angle to target
         float angleToTarget = Vector3.Angle(transform.forward, sphere.transform.position - transform.position);
