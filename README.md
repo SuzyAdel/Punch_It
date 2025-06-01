@@ -118,6 +118,12 @@ You're right to be thinking in terms of redundancy , however:
 - Distance between character and sphere
 - Angle between forward direction and sphere
 - Punch cooldown timer (normalized)
+![image](https://github.com/user-attachments/assets/4d343cc0-49e9-4572-9278-7e5296738033)
+
+![image](https://github.com/user-attachments/assets/25a65d86-6deb-47d3-a741-3cfce5c9f8f7)
+
+
+
 
 Total: **3 vector observations**
 
