@@ -85,7 +85,7 @@ You're right to be thinking in terms of redundancy , however:
 - **Left** (Triggered when `Left` = true, back to Idle when `Idle` = true)
 - **Right** (Triggered when `Right` = true, back to Idle when `Idle` = true)
 - **Walk** (Transition from Right or Left when `Walk` = true, back to Left or Right when `Left` or `Right` = true)
-- **Punch** (From Idle when `Idle` = true, to Walk if `Walk` = true, or back to Idle if `Idle` = true)
+- **Punch** (to Idle when `Idle` = true, to Walk if `Walk` = true, or back to Idle if `Punch`triggred )
 
 ### Transitions:
 - Add parameters: `Idle` (bool), `Left` (bool), `Right` (bool), `Walk` (bool), `Punch` (trigger)
