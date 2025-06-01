@@ -3,6 +3,11 @@ using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
 
+using UnityEngine;
+using Unity.MLAgents;
+using Unity.MLAgents.Actuators;
+using Unity.MLAgents.Sensors;
+
 public class MlA_Movement : Agent
 {
     [Header("References")]
@@ -10,7 +15,7 @@ public class MlA_Movement : Agent
     public GameObject plane;
     public Animator animator;
     public Material winMat, loseMat;
-    public Transform punchOrigin; // Assign the  right hand that  pumches 
+    public Transform punchOrigin; // Assign the right hand that punches 
 
     [Header("Settings")]
     public float cooldown = 2.0f;
@@ -27,6 +32,10 @@ public class MlA_Movement : Agent
         // Ensure the animator is assigned, Cache Rigidbody and freeze unwanted rotations
         rb = GetComponent<Rigidbody>();
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+
+        // Debug reference assignments
+        if (sphere == null) Debug.LogError("Sphere reference not assigned!");
+        if (animator == null) Debug.LogError("Animator reference not assigned!");
     }
 
     public override void OnEpisodeBegin()
@@ -163,19 +172,52 @@ public class MlA_Movement : Agent
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject == sphere)
+        // ====== NEW ERROR HANDLING ADDED HERE ======
+        // 1. Null check critical components first
+        if (collision == null || collision.gameObject == null ||
+            sphere == null || animator == null || plane == null)
+        {
+            Debug.LogWarning("Collision system missing references!");
+            return;
+        }
+
+        // 2. Verify we hit the sphere (using direct reference comparison)
+        if (collision.gameObject != sphere) return;
+
+        // 3. Safe animation state check
+        try
         {
             AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+
+            // 4. Only proceed during active punch frames
             if (state.IsName("Punch") && state.normalizedTime < 0.3f)
             {
+                // 5. Null-check before material change
+                var planeRenderer = plane.GetComponent<Renderer>();
+                if (planeRenderer != null)
+                {
+                    planeRenderer.material = winMat;
+                }
+                else
+                {
+                    Debug.LogWarning("Missing plane renderer!");
+                }
+
+                // 6. Add force if rigidbody exists
+                if (collision.rigidbody != null)
+                {
+                    collision.rigidbody.AddForce(transform.forward * 10f, ForceMode.Impulse);
+                }
+
                 SetReward(1f);
-                plane.GetComponent<Renderer>().material = winMat;
-                collision.rigidbody.AddForce(transform.forward * 10f, ForceMode.Impulse);
                 EndEpisode();
             }
         }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Animation error: {e.Message}");
+        }
     }
-
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var discreteActions = actionsOut.DiscreteActions;
