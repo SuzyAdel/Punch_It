@@ -5,190 +5,172 @@ using Unity.MLAgents.Sensors;
 
 public class MlA_Movement : Agent
 {
-    public GameObject sphere;
+    [Header("References")]
+    public GameObject sphere; // target to punch 
     public GameObject plane;
     public Animator animator;
     public Material winMat, loseMat;
-    
-    public float cooldown = 2.0f; // Cooldown for punching the sphere
-    public float moveSpeed = 5f; // Speed of the agent's movement
-    public float rotationSpeed = 100f; // Speed of rotation
+    public Transform punchOrigin; // Assign the  right hand that  pumches 
+
+    [Header("Settings")]
+    public float cooldown = 2.0f;
+    public float moveSpeed = 5f;
+    public float rotationSpeed = 100f; // degrees per second
+    public float punchRange = 4f; // distance to punch the sphere
+    public float punchAngleThreshold = 30f; // angle in degrees to consider a successful punch
 
     private float currentCooldown = 0f;
+    private Rigidbody rb;
+
+    void Start()
+    {
+        // Ensure the animator is assigned, Cache Rigidbody and freeze unwanted rotations
+        rb = GetComponent<Rigidbody>();
+        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+    }
 
     public override void OnEpisodeBegin()
     {
-        // get plane size from the attached game object 
-        int planeSize = (int)plane.transform.localScale.x; // Assuming the plane is square, use x scale
+        // Reset agent position
+        float planeSize = plane.transform.localScale.x * 10f; // Size of the plane 
+        float agentHeight = GetComponent<CapsuleCollider>().height;
+        float adjustedY = plane.transform.position.y + agentHeight / 2f; // diveded 2 to assure even height on the plane
 
-        // Reset the agent's position and state at the beginning of each episode
-        //make the character start at the center of the plane 
-        transform.localPosition = new Vector3(0, 0.5f, 0); // Center of plane with slight y offset
+        transform.position = new Vector3(
+            plane.transform.position.x,
+            adjustedY,
+            plane.transform.position.z
+        );
+        transform.rotation = Quaternion.identity;
 
-        transform.rotation = Quaternion.identity; // Face forward
-        // Reset cooldown timer
+        // Reset sphere position
+        float halfSize = planeSize / 2f - 1f; // Margin from edges
+        sphere.transform.position = new Vector3(
+            Random.Range(-halfSize, halfSize),
+            plane.transform.position.y + 0.5f,
+            Random.Range(-halfSize, halfSize)
+        );
+
+        // Reset materials and cooldown
+        //plane.GetComponent<Renderer>().material = loseMat; // Reset to loseMat to indicate start false -ve 
         currentCooldown = 0f;
-        // Set random position for the sphere within the plane bounds
-        float randomX = Random.Range(-planeSize / 2, planeSize / 2);
-        float randomZ = Random.Range(-planeSize / 2, planeSize / 2);
-        sphere.transform.localPosition = new Vector3(randomX, 0.5f, randomZ);
-
-        // Reset materials
-        plane.GetComponent<Renderer>().material = loseMat;
-
-        // Reset animation
         ResetAllTriggers();
+        animator.SetBool("Idle", true);
     }
 
-    void ResetAllTriggers()
+    void ResetAllTriggers()  // Clear all animation states to prevent conflicts
     {
+        animator.ResetTrigger("Punch");
         animator.SetBool("Idle", false);
         animator.SetBool("Left", false);
         animator.SetBool("Right", false);
         animator.SetBool("Walk", false);
-        animator.SetBool("Punch", false);
     }
-
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        // Collect observations about the environment here
-        //observe distance/angel between character and spheres local position 
+        // Normalized distance observation (0 -1)
+        float maxDistance = plane.transform.localScale.x * 10f;
+        float distance = Vector3.Distance(transform.position, sphere.transform.position);
+        sensor.AddObservation(Mathf.Clamp01(distance / maxDistance)); // 
 
-        sensor.AddObservation(Vector3.Distance(transform.localPosition, sphere.transform.localPosition));
-        sensor.AddObservation(Vector3.Angle(transform.forward, sphere.transform.position - transform.position) / 180f);
-        //wait a while for another punch 
+        // Normalized angle observation (0-1)
+        float angle = Vector3.Angle(transform.forward, sphere.transform.position - transform.position);
+        sensor.AddObservation(angle / 180f);
+
+        // Current cooldown state (0 = ready, 1 = full cooldown)
         sensor.AddObservation(Mathf.Clamp01(currentCooldown / cooldown));
     }
 
     public override void OnActionReceived(ActionBuffers actions)
     {
-        // Define how the agent should respond to actions 
-        // Process movement actions
-        int moveAction = actions.DiscreteActions[0]; // Branch 0: Walk forward (0=idle, 1=walk)
-        int turnAction = actions.DiscreteActions[1]; // Branch 1: Turn (0=left, 1=right, 2=no turn)
-        int punchAction = actions.DiscreteActions[2]; // Branch 2: Punch (0=trigger punch)
-
-        // Handle movement
-        if (moveAction == 1)
+        // Movement 
+        if (actions.DiscreteActions[0] == 1) // Walk
         {
             transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime, Space.Self);
             animator.SetBool("Walk", true);
             animator.SetBool("Idle", false);
-
         }
-        else
+        else // Idle ,no movement
         {
             animator.SetBool("Walk", false);
             animator.SetBool("Idle", true);
-
-            //  Discsrdge staying still 
             AddReward(-0.01f); // Small penalty for not moving
         }
 
-        // Handle turning
-        if (turnAction == 0) // Left
+        // Rotation
+        switch (actions.DiscreteActions[1])
         {
-            transform.Rotate(Vector3.up, -rotationSpeed * Time.deltaTime);
-            ResetAllTriggers();
-            animator.SetBool("Left", true);
-            //animator.SetBool("Right", false);
-        }
-        else if (turnAction == 1) // Right
-        {
-            transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
-            ResetAllTriggers();
-            animator.SetBool("Right", true);
-            //animator.SetBool("Left", false);
-        }
-        else // No turn, just reset turning animations
-        {
-            animator.SetBool("Left", false);
-            animator.SetBool("Right", false);
+            case 0: // Left
+                transform.Rotate(Vector3.up, -rotationSpeed * Time.deltaTime);
+                animator.SetBool("Left", true);
+                animator.SetBool("Right", false);
+                break;
+            case 1: // Right
+                transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
+                animator.SetBool("Right", true);
+                animator.SetBool("Left", false);
+                break;
+            default: // No turn
+                animator.SetBool("Left", false);
+                animator.SetBool("Right", false);
+                break;
         }
 
-        // Handle punching
-        if (punchAction == 0 && currentCooldown <= 0f)
+        // Punching
+        if (actions.DiscreteActions[2] == 0 && currentCooldown <= 0f)
         {
-            ResetAllTriggers();
-            //animator.SetBool("Punch", true);
+            animator.ResetTrigger("Punch");
             animator.SetTrigger("Punch");
             currentCooldown = cooldown;
 
-            // Check if we might hit the sphere (simplified check)
-            float distance = Vector3.Distance(transform.position, sphere.transform.position);
+            // Check punch accuracy, using distance and angle ranges 
+            float distance = Vector3.Distance(punchOrigin.position, sphere.transform.position);
             float angle = Vector3.Angle(transform.forward, sphere.transform.position - transform.position);
 
-            if (distance < 2f && angle < 30f) // Within punching range and angle
+            if (distance < punchRange && angle < punchAngleThreshold)
             {
-                // We'll let the actual collision handle the reward
+                // Reward will be handled in OnCollisionEnter
             }
             else
             {
-                // Penalize for punching when not properly aligned
-                AddReward(-0.1f);//-0.5f is too high, so I used -0.1f to avoid harsh penalties
+                AddReward(-0.1f); // Penalty for inaccurat punch
             }
         }
-        else
+        else if (actions.DiscreteActions[2] == 0 && currentCooldown > 0f)
         {
-            //animator.SetBool("Punch", false); trigger
-
-            // Penalize for punching during cooldown
-            if (punchAction == 0 && currentCooldown > 0f)
-            {
-                AddReward(-0.1f);// -0.5f is too high, so I used -0.1f to avoid harsh penalties
-            }
+            AddReward(-0.1f); // Penalty for punching during cooldown
         }
 
-        // Update cooldown timer
-        if (currentCooldown > 0f)
-        {
-            currentCooldown -= Time.deltaTime;
-        }
+        // Update cooldown decrement
+        if (currentCooldown > 0f) currentCooldown -= Time.deltaTime;
 
-        // Fell off check
-        if (transform.position.y < -1f) // fell off 
+        // Falling check 
+        if (transform.position.y < -1f)
         {
-            SetReward(-1f); // Penalty for falling off the plane
+            plane.GetComponent<Renderer>().material = loseMat;
+            SetReward(-1f);
             EndEpisode();
         }
 
-        // Reward for getting closer to target
-        // divide on smaller vlues means bigger value 
-        // inverse distance reward, this may lead to explosion so normlize 
-        float currentDistance = Vector3.Distance(transform.position, sphere.transform.position);
-        //AddReward(0.1f / currentDistance);
-        float maxReward = 0.1f;
-        float maxDistance = 10f; 
-        AddReward(maxReward * (1f - Mathf.Clamp01(currentDistance / maxDistance)));
+        // Continuous rewards
+        float normDistance = Mathf.Clamp01(Vector3.Distance(transform.position, sphere.transform.position) / (plane.transform.localScale.x * 10f));
+        AddReward(0.1f * (1 - normDistance)); // Distance reward
 
-
-        // Reward for better angle to targetf
-        float angleToTarget = Vector3.Angle(transform.forward, sphere.transform.position - transform.position);
-        AddReward(0.5f * (1f - angleToTarget / 180f)); // Normalized angle reward
-
+        float normAngle = Vector3.Angle(transform.forward, sphere.transform.position - transform.position) / 180f;
+        AddReward(0.05f * (1 - normAngle)); // Angle reward
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        // Check if we collided with the sphere
         if (collision.gameObject == sphere)
         {
-            // Get current animation state
             AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-
-            // Check if we're in punching animation
             if (state.IsName("Punch") && state.normalizedTime < 0.3f)
             {
-                // Punch the sphere
-                SetReward(1f); // Reward for punching the sphere
-
-                // set sphere color with win material to resemble win 
+                SetReward(1f);
                 plane.GetComponent<Renderer>().material = winMat;
-
-                // Add force to sphere for visual feedback
                 collision.rigidbody.AddForce(transform.forward * 10f, ForceMode.Impulse);
-
                 EndEpisode();
             }
         }
@@ -196,28 +178,19 @@ public class MlA_Movement : Agent
 
     public override void Heuristic(in ActionBuffers actionsOut)
     {
-        // Define manual control for testing purposes here
-        //press  take control manually the animation  to move and able to punch manually to effect the trianing 
         var discreteActions = actionsOut.DiscreteActions;
 
-        // Movement (W key)
+        // Movement, Forward or Idle W
         discreteActions[0] = Input.GetKey(KeyCode.W) ? 1 : 0;
 
-        // Turning (A and D keys)
+        // Rotation , Left or Right A/D
         if (Input.GetKey(KeyCode.A))
-        {
-            discreteActions[1] = 0; // Left
-        }
+            discreteActions[1] = 0;
         else if (Input.GetKey(KeyCode.D))
-        {
-            discreteActions[1] = 1; // Right
-        }
-        else
-        {
-            discreteActions[1] = 2; // No turn
-        }
+            discreteActions[1] = 1;
+        else discreteActions[1] = 2;
 
-        // Punch (Space key)
+        // Punch, space bar
         discreteActions[2] = Input.GetKey(KeyCode.Space) ? 0 : 1;
     }
 }
