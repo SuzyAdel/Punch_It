@@ -2,11 +2,7 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
-
-using UnityEngine;
-using Unity.MLAgents;
-using Unity.MLAgents.Actuators;
-using Unity.MLAgents.Sensors;
+using Unity.VisualScripting;
 
 public class MlA_Movement : Agent
 {
@@ -18,10 +14,10 @@ public class MlA_Movement : Agent
     public Transform punchOrigin; // Assign the right hand that punches 
 
     [Header("Settings")]
-    public float cooldown = 2.0f;
+    public float cooldown = 0.5f; // too long and low reward cuases ignore punching thus dwcreased 
     public float moveSpeed = 5f;
     public float rotationSpeed = 100f; // degrees per second
-    public float punchRange = 4f; // distance to punch the sphere
+    public float punchRange = 1f; // distance to punch the sphere
     public float punchAngleThreshold = 30f; // angle in degrees to consider a successful punch
 
     private float currentCooldown = 0f;
@@ -45,19 +41,24 @@ public class MlA_Movement : Agent
         float agentHeight = GetComponent<CapsuleCollider>().height;
         float adjustedY = plane.transform.position.y + agentHeight / 2f; // diveded 2 to assure even height on the plane
 
+        float halfSize = planeSize / 2f - 1f; // Calculate playable radius (with 1 unit margin)
+
         transform.position = new Vector3(
-            plane.transform.position.x,
+            plane.transform.position.x + Random.Range(-halfSize, halfSize),  // Random X position within margin
             adjustedY,
-            plane.transform.position.z
+            plane.transform.position.z + Random.Range(-halfSize, halfSize)   // Random Z position within margin
         );
         transform.rotation = Quaternion.identity;
 
         // Reset sphere position
-        float halfSize = planeSize / 2f - 1f; // Margin from edges
+        //Debug.Log("Episode started: repositioning sphere");//looks in the smae postion but acctually changing places 
+
+        float randomHeight = Random.Range(0.5f, 1.5f); // Random height between 0.5 and 1.5 units above plane
+
         sphere.transform.position = new Vector3(
-            Random.Range(-halfSize, halfSize),
-            plane.transform.position.y + 0.5f,
-            Random.Range(-halfSize, halfSize)
+            plane.transform.position.x + Random.Range(-halfSize, halfSize),  // Random X position
+            plane.transform.position.y + randomHeight,  // Y position with variation
+            plane.transform.position.z + Random.Range(-halfSize, halfSize)   // Random Z position
         );
 
         // Reset materials and cooldown
@@ -66,6 +67,7 @@ public class MlA_Movement : Agent
         ResetAllTriggers();
         animator.SetBool("Idle", true);
     }
+
 
     void ResetAllTriggers()  // Clear all animation states to prevent conflicts
     {
@@ -81,7 +83,7 @@ public class MlA_Movement : Agent
         // Normalized distance observation (0 -1)
         float maxDistance = plane.transform.localScale.x * 10f;
         float distance = Vector3.Distance(transform.position, sphere.transform.position);
-        sensor.AddObservation(Mathf.Clamp01(distance / maxDistance)); // 
+        sensor.AddObservation(Mathf.Clamp01(distance / maxDistance)); 
 
         // Normalized angle observation (0-1)
         float angle = Vector3.Angle(transform.forward, sphere.transform.position - transform.position);
@@ -104,7 +106,9 @@ public class MlA_Movement : Agent
         {
             animator.SetBool("Walk", false);
             animator.SetBool("Idle", true);
-            AddReward(-0.01f); // Small penalty for not moving
+            //AddReward(-0.02f); // Small penalty for not moving , increased it from -0.01f to -0.07f to encourage movement
+            // decreased to 0.2 becase 0.7 forced it to deviate weater its close or  not
+            //REMOVED , CONFUSES MODEL , forces any movement 
         }
 
         // Rotation
@@ -143,12 +147,14 @@ public class MlA_Movement : Agent
             }
             else
             {
-                AddReward(-0.1f); // Penalty for inaccurat punch
+                //AddReward(-0.02f); // Penalty for inaccurat punch, soften from -0.1f to -0.02f to encorage learning
+                //discourage strategic pauses!! 
             }
         }
         else if (actions.DiscreteActions[2] == 0 && currentCooldown > 0f)
         {
-            AddReward(-0.1f); // Penalty for punching during cooldown
+            AddReward(-0.05f); // Penalty for punching during cooldown, keept high as i increased duration 
+            // This encourages the agent to wait for cooldown to finish before punching again, too harsh
         }
 
         // Update cooldown decrement
@@ -158,21 +164,20 @@ public class MlA_Movement : Agent
         if (transform.position.y < -1f)
         {
             plane.GetComponent<Renderer>().material = loseMat;
-            SetReward(-1f);
+            SetReward(-15f); // Increased penalty for falling to make it more powerfull
             EndEpisode();
         }
 
         // Continuous rewards
         float normDistance = Mathf.Clamp01(Vector3.Distance(transform.position, sphere.transform.position) / (plane.transform.localScale.x * 10f));
-        AddReward(0.1f * (1 - normDistance)); // Distance reward
+        AddReward(0.5f * (1 - normDistance)); // Distance reward , increased from max 0.1 to 0.5 
 
         float normAngle = Vector3.Angle(transform.forward, sphere.transform.position - transform.position) / 180f;
-        AddReward(0.05f * (1 - normAngle)); // Angle reward
+        AddReward(0.5f * (1 - normAngle)); // Angle reward..
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        // ====== NEW ERROR HANDLING ADDED HERE ======
         // 1. Null check critical components first
         if (collision == null || collision.gameObject == null ||
             sphere == null || animator == null || plane == null)
@@ -190,7 +195,7 @@ public class MlA_Movement : Agent
             AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
 
             // 4. Only proceed during active punch frames
-            if (state.IsName("Punch") && state.normalizedTime < 0.3f)
+            if (state.IsName("Punch") && state.normalizedTime < 0.8f) //short punch animation duration, relaxed from 0.3 to 0.8f
             {
                 // 5. Null-check before material change
                 var planeRenderer = plane.GetComponent<Renderer>();
@@ -209,7 +214,7 @@ public class MlA_Movement : Agent
                     collision.rigidbody.AddForce(transform.forward * 10f, ForceMode.Impulse);
                 }
 
-                SetReward(1f);
+                SetReward(15f); //increased reward to make it stand out , instead of 1 --> 15f
                 EndEpisode();
             }
         }
@@ -235,4 +240,15 @@ public class MlA_Movement : Agent
         // Punch, space bar
         discreteActions[2] = Input.GetKey(KeyCode.Space) ? 0 : 1;
     }
-}
+}// repo_link: https://github.com/SuzyAdel/Punch_It
+
+// I wanted to use curriculum learning:
+// ex Phase 1: Fixed target position, no cooldown
+
+//Phase 2: Random target, no cooldown
+
+//Phase 3: Add cooldown
+
+//Phase 4: Add animation constraints
+
+// but for some reason the reusme never worked so i had to restart each time 
