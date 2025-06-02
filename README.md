@@ -1,5 +1,8 @@
 # Punch_It
 SphereChase-Punch is a Unity ML-Agents environment where a learning agent, locate a randomly placed sphere, and physically interact with it using a controlled punch or collision. The objective is to train the agent to approach the target efficiently and apply force from the correct range and angle.
+![image](https://github.com/user-attachments/assets/062dde7c-7ab0-45ab-8069-75e51ac0c742)
+
+
 
 # 🥊 Punch_It: Mohamed Ali's Agent Smackdown
 ## 🎮 Project Overview
