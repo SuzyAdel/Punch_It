@@ -82,20 +82,6 @@ Approach and precisely punch a sphere that moves up and down on a fixed plane. T
 | Falls off plane       | -10f                       | ✅ Harsh failure signal                   |
 
 
-corent rewards with reasoning: 
-
-
-- Small positive shaping reward for facing and moving closer to sphere
--W → Walk forward
-
-A/D → Turn left/right
-
-Space → Punch
-This is compatible with the 3-branch discrete action space above.
-
-- **Punch Logic:** Animator trigger `"Punch"` controlled by cooldown
-- **Network:** PPO with LSTM memory for temporal context and punch timing
-
 # Do You Need Punch Penalties if You Already Have Inverse Rewards?
 You're right to be thinking in terms of redundancy , however:
 
@@ -240,7 +226,6 @@ s
 
 
 ## 6. BUGSS 
-![image](https://github.com/user-attachments/assets/a572114c-1fdb-4334-878f-22b69ddebe0e)
 
 ## 🐞 Bugs & Fixes
 
@@ -254,21 +239,6 @@ s
 | Instant fail on start | Disabled "lose material" logic from starting state |
 
 
-## 🔮 Design Thoughts
-
-❌ Curriculum learning with resume never worked properly in this setup; had to restart training from scratch for each phase.
-
-🎨 Visual feedback via material swap on ground plane for win/loss outcome
-
-🧪 Heuristic controls for manual testing (WASD + Space
-> ❓ *Do we need punch penalties if inverse rewards already exist?*
-
-- **Yes**. Inverse rewards guide *what to do* (get closer, face target).
-- Penalties clarify *what NOT to do* (punch too soon, spam attacks, stay idle).
-- Balance keeps exploration healthy without punishing curiosity too harshly.
-
----
-
 ## 🧪 Future Extensions (Ideas)
 -ADD Learning Strategy (Planned Curriculum):
 | Phase | Description                          |
@@ -278,7 +248,8 @@ s
 | 3️⃣   | Add cooldown logic                   |
 | 4️⃣   | Add animation punch constraints      |
 
-- Use normal animation instead of script on sphere 
+- Use normal animation instead of script on sphere
+- 
 ## ✅ Summary
 
 Punch_It is a focused ML-agent playground to test:
